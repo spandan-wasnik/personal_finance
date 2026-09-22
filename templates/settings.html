@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-8">
+
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">Account Settings</h2>
+        <p class="text-gray-500 mt-1">Manage your profile and account preferences.</p>
+    </div>
+
+    <!-- Section 1: Profile Info -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+            <h3 class="text-lg font-semibold text-gray-800">Profile Information</h3>
+        </div>
+        <div class="p-6">
+            <!-- form_type=profile tells app.py which section to process -->
+            <form action="{{ url_for('settings') }}" method="POST" class="space-y-4">
+                <input type="hidden" name="form_type" value="profile">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" name="name" value="{{ user.name if user else '' }}" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" name="email" value="{{ user.email if user else '' }}" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
+                        Update Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section 2: Change Password -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+            <h3 class="text-lg font-semibold text-gray-800">Change Password</h3>
+        </div>
+        <div class="p-6">
+            <!-- form_type=password tells app.py which section to process -->
+            <form action="{{ url_for('settings') }}" method="POST" class="space-y-4 max-w-md">
+                <input type="hidden" name="form_type" value="password">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                    <input type="password" name="current_password" required class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <input type="password" name="new_password" required class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                    <input type="password" name="confirm_password" required class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors shadow-sm">
+                        Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section 3: Danger Zone -->
+    <div class="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-red-200 bg-red-50">
+            <h3 class="text-lg font-semibold text-red-800 flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i> Danger Zone
+            </h3>
+        </div>
+        <div class="p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h4 class="text-sm font-bold text-gray-900">Delete Account</h4>
+                <p class="text-sm text-gray-500 mt-1">Permanently delete your account and all your financial data. This action cannot be undone.</p>
+            </div>
+            <!-- form_type=delete tells app.py to delete the account -->
+            <form action="{{ url_for('settings') }}" method="POST" onsubmit="return confirm('WARNING: Are you absolutely sure? All your data will be permanently lost.');">
+                <input type="hidden" name="form_type" value="delete">
+                <button type="submit" class="bg-red-100 text-red-700 border border-red-300 px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-600 hover:text-white transition-colors shadow-sm whitespace-nowrap">
+                    Delete Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

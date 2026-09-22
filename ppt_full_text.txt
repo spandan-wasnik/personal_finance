@@ -1,0 +1,226 @@
+﻿SLIDE 1:
+  PERSONAL FINANCE EXPENSE ANALYZER
+  Track Spending  ΓÇó  Predict Future  ΓÇó  Protect Savings
+  Main Goal:  Predict Spending, Prevent Overspending, Protect Savings
+  STUDENT NAME
+Kedar Pophale B24AD1003
+Sanchita Pathak B24AD1024
+Om Dhakane B24AD1007
+Spandan Wasnik B24AD1005
+  COLLEGE
+Marathwada Mitra MandalΓÇÖs College Of Engineering
+  COURSE / DEPARTMENT
+AIDS
+  Mentor 
+Dr. Dhanraj Dhotre
+
+SLIDE 2:
+  THE CHALLENGE
+  The Problem
+  Silent Overspending
+  Users record expenses but may not realize where they're overspending.
+  Fast-Moving Categories
+  Spending on Dining, Shopping and Travel can increase quickly.
+  Too Late to React
+  Budget problems are often discovered only after overspending has happened.
+  Shrinking Savings
+  Current spending can quietly reduce planned savings.
+  Blind to What's Next
+  Users may not know how current spending affects upcoming or next month's expenses.
+  PROBLEM STATEMENT
+  How can we identify overspending early and show users how it can affect their future savings?
+  2
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 3:
+  OUR APPROACH
+  The Proposed Solution
+  The system lets users manually enter transactions, then runs them through a six-stage analysis pipeline:
+  1
+  Separate Expenses
+  Fixed, recurring-variable & variable
+  2
+  Analyze Patterns
+  Study category-wise spending
+  3
+  Predict Spending
+  Forecast future spend per category
+  4
+  Detect Overspending
+  Flag when budgets are at risk
+  5
+  Calculate Impact
+  Translate overspend into savings loss
+  6
+  Recommend Action
+  Suggest how to control spending
+  MAIN IDEA
+Track Spending  ΓåÆ  Predict Future Spending  ΓåÆ  Detect Overspending  ΓåÆ  Show Savings Impact  ΓåÆ  Recommend Action
+  3
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 4:
+  SYSTEM DESIGN
+  How the System Works
+  1
+  Manual Transaction
+Entry
+  2
+  Store Transaction
+in Database
+  3
+  Expense
+Categorization
+  4
+  Category-wise
+Spending Analysis
+  5
+  Future Spending
+Prediction
+  6
+  Compare Predicted vs
+Budget
+  7
+  Detect Possible
+Overspending
+  8
+  Calculate Impact
+on Savings
+  9
+  Generate Personalized
+Recommendation
+  10
+  Display Alert on
+Dashboard
+  Continuous Update:  Whenever the user adds, edits or deletes a transaction, the system updates the analysis automatically.
+  Risk-detection step
+  4
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 5:
+  AI / ML ENGINE ΓÇö PART 1
+  Future Spending Prediction
+  Model: Linear Regression
+  Learns from the user's previous and current spending to project where a category will land by month-end.
+  Dining Budget
+  Γé╣5,000
+  Spent in 10 Days
+  Γé╣4,000
+  Predicted Month-End Spending   Γëê Γé╣8,000
+  Expected Overspending
+Γé╣8,000 ΓêÆ Γé╣5,000 = Γé╣3,000
+  Spending Trajectory vs. Budget
+  5
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 6:
+  AI / ML ENGINE ΓÇö PART 2
+  Unusual Spending & Smart Explanation
+  Model: Isolation Forest
+  Checks whether a transaction or spending pattern is unusual compared with the user's normal behavior.
+  Normal Dining
+Γëê Γé╣500
+  New Transaction
+Γé╣4,000 ΓåÆ Unusual
+  LLM Explanation Layer
+  Converts calculated results into a simple, friendly message the user actually understands.
+  Your Dining spending is high.
+
+You've used 80% of your budget early in the month. Reducing Dining spending can help protect your savings.
+  6
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 7:
+  WORKED EXAMPLE
+  Smart Financial Warning
+  User Situation
+  Dining Budget
+  Γé╣5,000
+  Normal Daily Target
+  Γé╣167
+  Spent in 10 Days
+  Γé╣4,000
+  Budget Used
+  80%
+  ML Prediction
+  Predicted Month-End Spending
+  Γé╣8,000
+  Impact on Savings
+  Expected Overspending
+  Γé╣8,000 ΓêÆ Γé╣5,000 = Γé╣3,000
+  Planned Savings
+Γé╣15,000
+  Remaining Savings
+Γé╣12,000
+  Γé╣15,000 ΓêÆ Γé╣3,000 = Γé╣12,000
+  Recommendation
+  You're spending faster than planned on Dining.
+  Your normal target is around Γé╣167/day. Try reducing Dining spending to around:
+  Γé╣115 ΓÇô Γé╣120 / day
+  to reduce the impact on savings.
+  KEY IDEA:  Overspending  ΓåÆ  Lower Savings  ΓåÆ  Reduce Spending  ΓåÆ  Protect Savings
+  7
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 8:
+  ACADEMIC FOUNDATIONS
+  Course Mapping
+  DBMS
+  Store & retrieve financial data
+  Transactions
+Budgets
+Categories
+Savings goals
+  DSA
+  Process transactions efficiently
+  Search
+Sort
+Group transactions
+Category-wise totals
+  Statistics
+  Understand spending behavior
+  Average & median
+Spending variation
+Trends
+Normal patterns
+  OOPS
+  Organize & structure the application
+  Classes & Objects
+Encapsulation
+Inheritance
+Code Reusability
+  8
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 9:
+  IMPLEMENTATION
+  Technology Stack
+  Frontend
+  HTML + CSS
+  Backend
+  Python + FastAPI
+  Database
+  MySQL
+  ML
+  Python + Scikit-learn
+  LLM
+  LLM API
+  FINAL GOAL
+
+Don't just show users where their money went ΓÇö show them where their current spending could lead.
+  9
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 10:
+  Survey, Gap & Proposed Framework
+  Literature Survey & Research Proposal
+  RESEARCH GAP
+Existing research addresses categorization, forecasting, budgeting and anomaly detection, but there is scope for an integrated system that predicts overspending and estimates its potential impact on savings.
+  PROPOSED APPROACH
+Transaction ΓåÆ Expense Type Classification ΓåÆ Spending Analysis ΓåÆ Future Prediction ΓåÆ Overspending Detection ΓåÆ Savings Impact ΓåÆ Recommendation
+  10
+  PERSONAL FINANCE EXPENSE ANALYZER
+
+SLIDE 11:
+  THANK YOU..........
+

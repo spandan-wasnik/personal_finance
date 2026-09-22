@@ -1,0 +1,58 @@
+date,description,amount,type,category,payment_mode,notes
+2026-09-01,Salary Credit,30000,income,Other,Bank Transfer,Monthly salary
+2026-09-02,Swiggy Order - Biryani,350,expense,Food,UPI,Dinner
+2026-09-03,Uber Ride to Office,180,expense,Transport,UPI,Morning commute
+2026-09-03,Amazon - USB Cable,299,expense,Shopping,Card,Tech accessories
+2026-09-04,Zomato - Pizza,520,expense,Food,UPI,Lunch with friend
+2026-09-05,Electricity Bill,1200,expense,Bills,UPI,Monthly electricity
+2026-09-06,Netflix Subscription,499,expense,Entertainment,Card,Monthly subscription
+2026-09-07,Swiggy - Breakfast,180,expense,Food,UPI,Morning delivery
+2026-09-08,Metro Card Recharge,500,expense,Transport,UPI,Monthly metro pass
+2026-09-09,Flipkart - Books,750,expense,Shopping,Card,College textbooks
+2026-09-10,Zomato - Chinese,420,expense,Food,UPI,Dinner
+2026-09-10,Petrol,800,expense,Transport,Cash,Vehicle fuel
+2026-09-11,College Exam Fee,500,expense,Education,Cash,Semester exam
+2026-09-12,Swiggy - Lunch,290,expense,Food,UPI,Work lunch
+2026-09-13,Ola Ride,250,expense,Transport,UPI,Airport drop
+2026-09-14,Myntra - T-Shirt,699,expense,Shopping,Card,Clothing
+2026-09-14,Swiggy - Dinner,380,expense,Food,UPI,Weekend dinner
+2026-09-15,Freelance Payment Received,5000,income,Other,Bank Transfer,Web design project
+2026-09-15,Spotify Premium,119,expense,Entertainment,Card,Music subscription
+2026-09-16,Swiggy - Biryani,450,expense,Food,UPI,Lunch
+2026-09-17,Rapido Bike Taxi,95,expense,Transport,UPI,Short trip
+2026-09-17,Internet Bill,699,expense,Bills,UPI,Monthly broadband
+2026-09-18,Zomato - Burger,320,expense,Food,UPI,Dinner
+2026-09-19,Amazon - Headphones,1499,expense,Shopping,Card,Electronics
+2026-09-19,Swiggy - Coffee,150,expense,Food,UPI,Morning coffee
+2026-09-20,PVR Cinema Ticket,350,expense,Entertainment,Card,Movie with friends
+2026-09-20,Uber Ride,220,expense,Transport,UPI,Evening travel
+2026-09-21,Swiggy - Dinner,4500,expense,Food,UPI,Restaurant birthday party
+2026-09-21,Pharmacy - Medicine,350,expense,Health,Cash,Cold medicine
+2026-08-01,Salary Credit,30000,income,Other,Bank Transfer,Monthly salary August
+2026-08-03,Swiggy Order,310,expense,Food,UPI,Dinner
+2026-08-04,Uber Ride,160,expense,Transport,UPI,Commute
+2026-08-05,Electricity Bill,1100,expense,Bills,UPI,Monthly electricity
+2026-08-06,Amazon - Shoes,1299,expense,Shopping,Card,Shopping
+2026-08-08,Zomato - Pizza,480,expense,Food,UPI,Lunch
+2026-08-10,Netflix,499,expense,Entertainment,Card,Subscription
+2026-08-12,Petrol,750,expense,Transport,Cash,Fuel
+2026-08-14,Swiggy - Biryani,390,expense,Food,UPI,Dinner
+2026-08-15,Freelance Income,4000,income,Other,Bank Transfer,Project payment
+2026-08-17,College Fee,500,expense,Education,Cash,Exam fee
+2026-08-20,Flipkart - Books,620,expense,Shopping,Card,Books
+2026-08-22,Internet Bill,699,expense,Bills,UPI,Broadband
+2026-08-25,Swiggy - Lunch,270,expense,Food,UPI,Lunch
+2026-08-28,Gym Membership,800,expense,Health,Cash,Monthly gym
+2026-07-01,Salary Credit,30000,income,Other,Bank Transfer,Monthly salary July
+2026-07-03,Swiggy Order,280,expense,Food,UPI,Dinner
+2026-07-05,Uber Ride,200,expense,Transport,UPI,Travel
+2026-07-06,Electricity Bill,950,expense,Bills,UPI,Monthly electricity
+2026-07-08,Amazon Shopping,1100,expense,Shopping,Card,Shopping
+2026-07-10,Zomato Order,350,expense,Food,UPI,Lunch
+2026-07-12,Spotify,119,expense,Entertainment,Card,Music
+2026-07-15,Petrol,680,expense,Transport,Cash,Fuel
+2026-07-18,Swiggy - Biryani,320,expense,Food,UPI,Dinner
+2026-07-20,Freelance Income,6000,income,Other,Bank Transfer,Design project
+2026-07-22,Internet Bill,699,expense,Bills,UPI,Broadband
+2026-07-25,Swiggy - Lunch,240,expense,Food,UPI,Lunch
+2026-07-28,PVR Movie,280,expense,Entertainment,Card,Movie

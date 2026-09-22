@@ -1,0 +1,33 @@
+﻿
+========== SLIDE 1 ==========
+STUDENT NAME
+Kedar Pophale B24AD1003
+Sanchita Pathak B24AD1024
+Om Dhakane B24AD1007
+Spandan Wasnik B24AD1005
+Mentor 
+Dr. Dhanraj Dhotre
+
+========== SLIDE 2 ==========
+
+========== SLIDE 3 ==========
+
+========== SLIDE 4 ==========
+
+========== SLIDE 5 ==========
+
+========== SLIDE 6 ==========
+
+========== SLIDE 7 ==========
+
+========== SLIDE 8 ==========
+
+========== SLIDE 9 ==========
+
+========== SLIDE 10 ==========
+RESEARCH GAP
+Existing research addresses categorization, forecasting, budgeting and anomaly detection, but there is scope for an integrated system that predicts overspending and estimates its potential impact on savings.
+PROPOSED APPROACH
+Transaction ΓåÆ Expense Type Classification ΓåÆ Spending Analysis ΓåÆ Future Prediction ΓåÆ Overspending Detection ΓåÆ Savings Impact ΓåÆ Recommendation
+
+========== SLIDE 11 ==========

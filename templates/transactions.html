@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-800">Transactions</h2>
+        <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center">
+            <i class="fas fa-plus mr-2"></i> Add Transaction
+        </button>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <form id="filterForm" method="GET" action="{{ url_for('transactions') }}" class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">From Date</label>
+                <input type="date" name="date_from" value="{{ filter_date_from }}" class="border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 py-1.5 px-3 border shadow-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">To Date</label>
+                <input type="date" name="date_to" value="{{ filter_date_to }}" class="border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 py-1.5 px-3 border shadow-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                <select name="type" class="border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 py-1.5 px-3 border shadow-sm">
+                    <option value="">All</option>
+                    <option value="expense" {% if filter_type == 'expense' %}selected{% endif %}>Expense</option>
+                    <option value="income" {% if filter_type == 'income' %}selected{% endif %}>Income</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
+                <select name="category" class="border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 py-1.5 px-3 border shadow-sm w-32">
+                    <option value="">All</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if filter_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-grow">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Search</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400 text-sm"></i>
+                    </div>
+                    <input type="text" name="search" value="{{ filter_search }}" placeholder="Search description..." class="pl-9 border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 py-1.5 px-3 border shadow-sm w-full">
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="bg-gray-800 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors shadow-sm">
+                    Filter
+                </button>
+                <button type="button" onclick="resetFilters()" class="bg-white border border-gray-300 text-gray-700 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
+                    Reset
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% if transactions and transactions|length > 0 %}
+                        {% for t in transactions %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ t.date }}</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                {{ t.description }}
+                                {% if t.notes %}
+                                <p class="text-xs text-gray-500 font-normal mt-0.5 truncate max-w-xs" title="{{ t.notes }}">{{ t.notes }}</p>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
+                                    {% if t.type == 'income' %}bg-green-50 text-green-700 border-green-200{% else %}bg-gray-50 text-gray-700 border-gray-200{% endif %}">
+                                    {{ t.category }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.payment_mode }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium currency {% if t.type == 'income' %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if t.type == 'income' %}+{% else %}-{% endif %}₹{{ "{:,.0f}".format(t.amount) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <button onclick="openEditModal('{{ t.id }}', '{{ t.date }}', '{{ t.description }}', '{{ t.amount }}', '{{ t.type }}', '{{ t.category }}', '{{ t.payment_mode }}', '{{ t.notes | default('') }}')" class="text-blue-600 hover:text-blue-900 mx-2" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteTransaction('{{ t.id }}')" class="text-red-600 hover:text-red-900 mx-2" title="Delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-receipt text-4xl text-gray-300 mb-3"></i>
+                                    <p class="text-lg font-medium text-gray-600">No transactions found</p>
+                                    <p class="text-sm">Try adjusting your filters or add a new transaction.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination info (Mockup) -->
+        <div class="px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+            <span class="text-sm text-gray-700">
+                Showing <span class="font-medium">1</span> to <span class="font-medium">{{ transactions|length if transactions else 0 }}</span> transactions
+            </span>
+            <div class="flex gap-1">
+                <button class="px-3 py-1 border border-gray-300 bg-white text-gray-500 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50" disabled>Previous</button>
+                <button class="px-3 py-1 border border-gray-300 bg-white text-gray-700 rounded-md text-sm hover:bg-gray-50">Next</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="transactionModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Background backdrop -->
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity opacity-0 backdrop-blur-sm"></div>
+
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <!-- Modal panel -->
+            <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 scale-95 duration-300">
+                
+                <form id="transactionForm" action="/transactions/add" method="POST">
+                    <input type="hidden" name="_method" id="methodInput" value="POST">
+                    
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
+                            <h3 class="text-lg font-semibold leading-6 text-gray-900" id="modalTitle">Add Transaction</h3>
+                            <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- Type -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Transaction Type</label>
+                                <div class="flex space-x-4">
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="radio" name="type" value="Expense" id="typeExpense" class="form-radio text-red-600 focus:ring-red-500 h-4 w-4" checked>
+                                        <span class="ml-2 text-sm text-gray-700">Expense</span>
+                                    </label>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="radio" name="type" value="Income" id="typeIncome" class="form-radio text-green-600 focus:ring-green-500 h-4 w-4">
+                                        <span class="ml-2 text-sm text-gray-700">Income</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Date -->
+                                <div>
+                                    <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                                    <input type="date" name="date" id="date" required class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                <!-- Amount -->
+                                <div>
+                                    <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Amount (₹) *</label>
+                                    <input type="number" step="0.01" name="amount" id="amount" required min="0" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div>
+                                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                                <input type="text" name="description" id="description" required placeholder="e.g. Groceries at D-Mart" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Category -->
+                                <div>
+                                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                                    <select name="category" id="category" required class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <!-- Need to populate these dynamically based on Type in JS usually, but statically here -->
+                                        <option value="">Select...</option>
+                                        {% for cat in categories %}
+                                        <option value="{{ cat }}">{{ cat }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <!-- Payment Mode -->
+                                <div>
+                                    <label for="payment_mode" class="block text-sm font-medium text-gray-700 mb-1">Payment Mode *</label>
+                                    <select name="payment_mode" id="payment_mode" required class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="UPI">UPI</option>
+                                        <option value="Credit Card">Credit Card</option>
+                                        <option value="Debit Card">Debit Card</option>
+                                        <option value="Net Banking">Net Banking</option>
+                                        <option value="Cash">Cash</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div>
+                                <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                                <textarea name="notes" id="notes" rows="2" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-200">
+                        <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 sm:ml-3 sm:w-auto">Save Transaction</button>
+                        <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/transactions.js') }}"></script>
+{% endblock %}

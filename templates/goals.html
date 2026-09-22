@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-800">Financial Goals</h2>
+        <button onclick="toggleGoalForm()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center">
+            <i class="fas fa-plus mr-2"></i> New Goal
+        </button>
+    </div>
+
+    <!-- Section 1: Add New Goal form (Hidden by default) -->
+    <div id="addGoalForm" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hidden transition-all">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Create Financial Goal</h3>
+        <form action="{{ url_for('goals') }}" method="POST">
+            <input type="hidden" name="form_type" value="add">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Goal Name *</label>
+                    <input type="text" name="goal_name" required placeholder="e.g., Buy a Laptop" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Target Amount (₹) *</label>
+                    <input type="number" name="target_amount" required min="1" step="any" placeholder="e.g., 60000" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Current Savings (₹)</label>
+                    <input type="number" name="current_amount" value="0" min="0" step="any" placeholder="e.g., 20000" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Contribution (₹) *</label>
+                    <input type="number" name="monthly_contribution" required min="1" step="any" placeholder="e.g., 5000" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Target Date</label>
+                    <input type="date" name="target_date" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" onclick="toggleGoalForm()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm">
+                    Save Goal
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Section 2: Goals Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% if goals and goals|length > 0 %}
+            {% for goal in goals %}
+                {% set percent = (goal.current_amount / goal.target_amount * 100) | round if goal.target_amount > 0 else 0 %}
+                {% set display_percent = percent if percent <= 100 else 100 %}
+                {% set achieved = goal.current_amount >= goal.target_amount %}
+                
+                {% set months_left = 0 %}
+                {% if not achieved and goal.monthly_contribution > 0 %}
+                    {% set months_left = ((goal.target_amount - goal.current_amount) / goal.monthly_contribution) | round(0, 'ceil') %}
+                {% endif %}
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col card-hover relative overflow-hidden">
+                    
+                    {% if achieved %}
+                    <!-- Achieved Badge -->
+                    <div class="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-sm">
+                        <i class="fas fa-check-circle mr-1"></i> Achieved
+                    </div>
+                    {% endif %}
+
+                    <div class="flex justify-between items-start mb-4 pr-16">
+                        <h3 class="text-lg font-bold text-gray-800 truncate" title="{{ goal.goal_name }}">{{ goal.goal_name }}</h3>
+                        <div class="flex gap-2 text-gray-400">
+                            <button onclick="openEditGoalModal('{{ goal.id }}', '{{ goal.goal_name }}', '{{ goal.target_amount }}', '{{ goal.current_amount }}', '{{ goal.monthly_contribution }}', '{{ goal.target_date or '' }}')" class="hover:text-blue-600 transition-colors" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <form action="{{ url_for('delete_goal', goal_id=goal.id) }}" method="POST" class="inline" onsubmit="return confirm('Delete this goal?')">
+                                <button type="submit" class="hover:text-red-600 transition-colors" title="Delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-6 mt-2">
+                        <div class="text-3xl font-bold {{ 'text-green-600' if achieved else 'text-gray-900' }} currency mb-1">
+                            ₹{{ "{:,.0f}".format(goal.current_amount) }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            of ₹{{ "{:,.0f}".format(goal.target_amount) }} target
+                        </div>
+                    </div>
+
+                    <div class="mt-auto">
+                        <div class="flex justify-between text-xs font-medium text-gray-600 mb-1">
+                            <span>Progress</span>
+                            <span>{{ percent }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5 mb-4">
+                            <div class="{{ 'bg-green-500' if achieved else 'bg-blue-500' }} h-2.5 rounded-full progress-bar-fill shadow-sm" style="width: {{ display_percent }}%"></div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3 text-sm text-gray-600 flex justify-between items-center border border-gray-100">
+                            <div>
+                                <i class="fas fa-calendar-alt text-gray-400 mr-1.5"></i>
+                                {% if achieved %}
+                                    <span class="font-medium text-green-600">Goal reached!</span>
+                                {% else %}
+                                    Estimated time:
+                                {% endif %}
+                            </div>
+                            {% if not achieved %}
+                                <span class="font-semibold text-gray-800">{{ months_left|int }} months</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-span-full bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
+                    <i class="fas fa-bullseye text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">No Goals Set</h3>
+                <p class="text-gray-500 max-w-md mx-auto mb-6">Setting financial goals helps you track your savings progress and stay motivated. What are you saving for?</p>
+                <button onclick="toggleGoalForm()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                    Create Your First Goal
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Edit Goal Modal -->
+<div id="editGoalModal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h3 class="text-lg font-bold text-gray-800">Edit Financial Goal</h3>
+            <button type="button" onclick="closeEditGoalModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editGoalForm" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Goal Name *</label>
+                    <input type="text" id="edit_goal_name" name="goal_name" required class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Target Amount (₹) *</label>
+                    <input type="number" id="edit_target_amount" name="target_amount" required min="1" step="any" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Current Savings (₹)</label>
+                    <input type="number" id="edit_current_amount" name="current_amount" min="0" step="any" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Contribution (₹) *</label>
+                    <input type="number" id="edit_monthly_contribution" name="monthly_contribution" required min="1" step="any" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Target Date</label>
+                    <input type="date" id="edit_target_date" name="target_date" class="block w-full rounded-lg border-gray-300 border py-2 px-3 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" onclick="closeEditGoalModal()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm">
+                    Update Goal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleGoalForm() {
+        const form = document.getElementById('addGoalForm');
+        if (form.classList.contains('hidden')) {
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            form.classList.add('hidden');
+        }
+    }
+
+    function openEditGoalModal(id, name, target, current, contribution, date) {
+        const form = document.getElementById('editGoalForm');
+        form.action = '/goals/edit/' + id;
+        document.getElementById('edit_goal_name').value = name;
+        document.getElementById('edit_target_amount').value = target;
+        document.getElementById('edit_current_amount').value = current;
+        document.getElementById('edit_monthly_contribution').value = contribution;
+        document.getElementById('edit_target_date').value = date;
+        document.getElementById('editGoalModal').classList.remove('hidden');
+    }
+
+    function closeEditGoalModal() {
+        document.getElementById('editGoalModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

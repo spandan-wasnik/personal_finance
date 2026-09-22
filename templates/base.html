@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance & Expense Analyzer</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config for Custom Colors/Fonts if needed -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        success: '#10B981',
+                        danger: '#EF4444',
+                        warning: '#F59E0B',
+                        dark: '#1F2937',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-900 text-white flex flex-col h-full shadow-lg z-20">
+        <!-- Branding -->
+        <div class="h-16 flex items-center px-6 border-b border-gray-800">
+            <span class="text-xl font-bold tracking-wider text-blue-400">
+                <i class="fas fa-wallet mr-2"></i>FinanceAnalyzer
+            </span>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1 px-3">
+                <li>
+                    <a href="{{ url_for('dashboard') }}" class="flex items-center px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'dashboard' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <i class="fas fa-home w-6 text-center"></i>
+                        <span class="ml-3">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('transactions') }}" class="flex items-center px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'transactions' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <i class="fas fa-list w-6 text-center"></i>
+                        <span class="ml-3">Transactions</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('upload') }}" class="flex items-center px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'upload' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <i class="fas fa-upload w-6 text-center"></i>
+                        <span class="ml-3">Upload</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('budget') }}" class="flex items-center px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'budget' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <i class="fas fa-wallet w-6 text-center"></i>
+                        <span class="ml-3">Budget</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('goals') }}" class="flex items-center px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'goals' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <i class="fas fa-bullseye w-6 text-center"></i>
+                        <span class="ml-3">Goals</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('analysis') }}" class="flex items-center px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'analysis' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <i class="fas fa-chart-bar w-6 text-center"></i>
+                        <span class="ml-3">Analysis</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('settings') }}" class="flex items-center px-3 py-2.5 rounded-lg transition-colors {% if request.endpoint == 'settings' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <i class="fas fa-cog w-6 text-center"></i>
+                        <span class="ml-3">Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Logout -->
+        <div class="p-4 border-t border-gray-800">
+            <a href="{{ url_for('logout') }}" class="flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-colors">
+                <i class="fas fa-sign-out-alt w-6 text-center"></i>
+                <span class="ml-3">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- Header -->
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
+            <h1 class="text-xl font-semibold text-gray-800">Personal Finance & Expense Analyzer</h1>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-600">Welcome, <strong>{{ current_user.name if current_user else 'User' }}</strong></span>
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200">
+                    {{ current_user.name[0] | upper if current_user else 'U' }}
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Area -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50 custom-scrollbar">
+            
+            <!-- Flash Messages -->
+            <div class="mb-6 space-y-3" id="flash-messages">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            {% set bg_class = 'bg-blue-100 border-blue-400 text-blue-700' %}
+                            {% set icon = 'fa-info-circle' %}
+                            
+                            {% if category == 'success' %}
+                                {% set bg_class = 'bg-green-100 border-green-400 text-green-700' %}
+                                {% set icon = 'fa-check-circle' %}
+                            {% elif category == 'error' or category == 'danger' %}
+                                {% set bg_class = 'bg-red-100 border-red-400 text-red-700' %}
+                                {% set icon = 'fa-exclamation-circle' %}
+                            {% elif category == 'warning' %}
+                                {% set bg_class = 'bg-yellow-100 border-yellow-400 text-yellow-700' %}
+                                {% set icon = 'fa-exclamation-triangle' %}
+                            {% endif %}
+                            
+                            <div class="px-4 py-3 rounded-lg border flex items-start shadow-sm {{ bg_class }}" role="alert">
+                                <i class="fas {{ icon }} mt-1 mr-3"></i>
+                                <span class="block sm:inline flex-1">{{ message }}</span>
+                                <button type="button" class="ml-auto focus:outline-none" onclick="this.parentElement.style.display='none'">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+
+            <!-- Footer -->
+            <footer class="mt-12 border-t border-gray-200 pt-6 pb-2 text-center text-gray-500 text-sm">
+                <p>Personal Finance & Expense Analyzer</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Common JS -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
