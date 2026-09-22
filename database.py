@@ -9,7 +9,7 @@ from mysql.connector import Error
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'AppleBanana2006@123',   # Change this to your MySQL root password
+    'password': '',   # Change this to your MySQL root password
     'database': 'personal_finance',
     'port': 3306
 }
