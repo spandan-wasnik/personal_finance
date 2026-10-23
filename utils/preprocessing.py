@@ -1,225 +1,208 @@
-# preprocessing.py
-# This file handles reading and cleaning CSV/Excel files from payment apps.
-
+# preprocessing.py - OM'S MODULE: CSV / Excel Ingestion & Cleaning
 import pandas as pd
 import datetime
-import math
 from utils.categorization import categorize_transaction
 from utils.expense_classifier import classify_expense_type
 
-# Mapping of standard column names for different apps
-COLUMN_MAPPINGS = {
-    'PhonePe': {
-        'Date': 'date',
-        'Transaction Details': 'description',
-        'Amount': 'amount',
-        'Type': 'type'
-    },
-    'Paytm': {
-        'Date': 'date',
-        'Activity': 'description',
-        'Amount': 'amount',
-        'Status': 'type'
-    },
-    'GooglePay': {
-        'Time': 'date',
-        'Description': 'description',
-        'Amount': 'amount',
-        'Status': 'type'
-    },
-    'Generic': {
-        'date': 'date',
-        'description': 'description',
-        'amount': 'amount',
-        'type': 'type',
-        'category': 'category',
-        'payment_mode': 'payment_mode',
-        'notes': 'notes'
-    }
-}
-
-def clean_amount(value):
-    """
-    Removes currency symbols, commas, and spaces, and converts to float.
-    """
-    if pd.isna(value):
-        return 0.0
+def clean_date(val):
+    """Safely converts any date format to YYYY-MM-DD string (never returns NaT)."""
+    if isinstance(val, pd.Series):
+        val = val.dropna().iloc[0] if not val.dropna().empty else None
+    if pd.isna(val) or val is None or str(val).strip().lower() in ['', 'nat', 'nan', 'none']:
+        return datetime.date.today().strftime('%Y-%m-%d')
+    if isinstance(val, (datetime.date, datetime.datetime, pd.Timestamp)):
+        return val.strftime('%Y-%m-%d')
+    s = str(val).strip()
     
-    val_str = str(value)
-    # Remove unwanted characters
-    val_str = val_str.replace('₹', '').replace(',', '').replace('Rs.', '').replace(' ', '').strip()
-    
-    # Handle negative signs if any, though amounts should be positive
-    try:
-        amount = float(val_str)
-        return abs(amount) # Keep amount positive
-    except ValueError:
-        return 0.0
-
-def clean_date(value):
-    """
-    Tries multiple date formats and returns a datetime.date object.
-    """
-    if pd.isna(value):
-        return datetime.date.today()
-        
-    val_str = str(value).strip()
-    
-    formats_to_try = [
-        '%Y-%m-%d', '%d-%m-%Y', '%d/%m/%Y', '%Y/%m/%d',
-        '%Y-%m-%d %H:%M:%S', '%d-%m-%Y %H:%M:%S', '%b %d, %Y', '%d %b %Y'
-    ]
-    
-    for fmt in formats_to_try:
+    # Try common formats first
+    for fmt in ('%Y-%m-%d', '%d-%m-%Y', '%d/%m/%Y', '%m/%d/%Y', '%d.%m.%Y', '%d %b %Y', '%b %d, %Y', '%Y/%m/%d'):
         try:
-            dt = datetime.datetime.strptime(val_str, fmt)
-            return dt.date()
-        except ValueError:
+            return datetime.datetime.strptime(s.split()[0], fmt).strftime('%Y-%m-%d')
+        except Exception:
+            pass
+
+    # Try pandas parser as backup
+    try:
+        dt = pd.to_datetime(s, errors='coerce')
+        if pd.notna(dt) and str(dt) != 'NaT':
+            return dt.strftime('%Y-%m-%d')
+    except Exception:
+        pass
+
+    return datetime.date.today().strftime('%Y-%m-%d')
+
+def find_header_row_csv(filepath):
+    """Detects table header row in CSV statements (e.g. PhonePe metadata lines)."""
+    encodings = ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252']
+    lines = []
+    for enc in encodings:
+        try:
+            with open(filepath, 'r', encoding=enc) as f:
+                lines = [f.readline() for _ in range(50)]
+            break
+        except Exception:
             continue
             
-    # If all formats fail, use pandas to parse
+    key_terms = ['date', 'amount', 'details', 'description', 'particulars', 'narration', 'transaction', 'debit', 'credit', 'balance', 'withdrawal', 'deposit', 'txn']
+    for idx, line in enumerate(lines):
+        line_clean = line.strip().lower()
+        if not line_clean:
+            continue
+        parts = [p.strip().strip('"\'').lower() for p in line_clean.split(',')]
+        matched = sum(1 for part in parts if any(kt in part for kt in key_terms))
+        if matched >= 2:
+            return idx
+    return 0
+
+def find_header_row_excel(filepath):
+    """Detects table header row in Excel statements."""
     try:
-        dt = pd.to_datetime(val_str)
-        return dt.date()
-    except:
-        return datetime.date.today()
+        preview_df = pd.read_excel(filepath, header=None, nrows=40)
+        key_terms = ['date', 'amount', 'details', 'description', 'particulars', 'narration', 'transaction', 'debit', 'credit', 'balance', 'withdrawal', 'deposit', 'txn']
+        for idx, row in preview_df.iterrows():
+            row_vals = [str(v).strip().lower() for v in row.values if pd.notna(v)]
+            matched = sum(1 for val in row_vals if any(kt in val for kt in key_terms))
+            if matched >= 2:
+                return idx
+    except Exception:
+        pass
+    return 0
 
-def detect_source(columns):
-    """
-    Identifies the app source by looking at the column names.
-    """
-    cols_upper = [str(c).upper() for c in columns]
-    
-    if 'TRANSACTION DETAILS' in cols_upper:
-        return 'PhonePe'
-    elif 'ACTIVITY' in cols_upper and 'PAYTM' in ' '.join(cols_upper):
-        return 'Paytm'
-    elif 'TIME' in cols_upper and 'GOOGLE' in ' '.join(cols_upper):
-        return 'GooglePay'
-    else:
-        return 'Generic'
-
-def normalize_columns(df, source):
-    """
-    Renames columns to our standard names: date, description, amount, type
-    """
-    # Create a lower case mapping of the source's expected columns
-    source_mapping = COLUMN_MAPPINGS.get(source, COLUMN_MAPPINGS['Generic'])
-    
-    # We will do a case-insensitive rename
-    rename_dict = {}
-    for col in df.columns:
-        for expected_col, standard_col in source_mapping.items():
-            if str(col).upper() == expected_col.upper():
-                rename_dict[col] = standard_col
-                
-    return df.rename(columns=rename_dict)
-
-def process_uploaded_file(filepath, user_id, source_override=None):
-    """
-    Reads a CSV or Excel file, cleans the data, categorizes transactions,
-    and returns a list of transaction dictionaries.
-    """
-    success_count = 0
-    skip_count = 0
-    error_messages = []
-    transactions = []
-    
-    try:
-        if filepath.endswith('.csv'):
-            df = pd.read_csv(filepath)
-        elif filepath.endswith(('.xls', '.xlsx')):
-            df = pd.read_excel(filepath)
-        else:
-            return [], 0, 0, ["Unsupported file format"]
-            
-        source = source_override if source_override else detect_source(df.columns)
-        df = normalize_columns(df, source)
-        
-        # Check if required columns exist
-        required_cols = ['date', 'description', 'amount']
-        for col in required_cols:
-            if col not in df.columns:
-                return [], 0, 0, [f"Missing required column: {col}"]
-                
-        # Process row by row
-        for index, row in df.iterrows():
+def load_statement_dataframe(filepath):
+    """Loads CSV or Excel safely with automatic header detection and encoding fallbacks."""
+    if filepath.endswith('.csv'):
+        header_idx = find_header_row_csv(filepath)
+        for enc in ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252']:
             try:
-                desc = str(row['description']) if pd.notna(row['description']) else ''
-                amount = clean_amount(row['amount'])
-                
-                # Skip zero amounts
-                if amount <= 0:
-                    skip_count += 1
-                    continue
-                    
-                date_val = clean_date(row['date'])
-                
-                # Determine type (income or expense)
-                t_type = 'expense'
-                if 'type' in df.columns:
-                    type_val = str(row['type']).lower()
-                    if 'credit' in type_val or 'received' in type_val or 'income' in type_val:
-                        t_type = 'income'
-                        
-                # Use category if present, else auto-categorize from description
-                category = 'Other'
-                if 'category' in df.columns and pd.notna(row['category']) and str(row['category']).strip():
-                    category = str(row['category']).strip()
-                else:
-                    category = categorize_transaction(desc)
-                    
-                expense_type = classify_expense_type(desc, amount, category)
-                
-                # Determine payment mode
-                payment_mode = 'UPI'
-                if 'payment_mode' in df.columns and pd.notna(row['payment_mode']) and str(row['payment_mode']).strip():
-                    pm = str(row['payment_mode']).strip()
-                    # Standardize common values
-                    if pm.lower() in ('upi', 'gpay', 'phonepe', 'paytm'):
-                        payment_mode = 'UPI'
-                    elif pm.lower() in ('card', 'debit card', 'credit card', 'visa', 'mastercard'):
-                        payment_mode = 'Card'
-                    elif pm.lower() in ('bank', 'bank transfer', 'net banking', 'neft', 'rtgs', 'imps'):
-                        payment_mode = 'Bank Transfer'
-                    elif pm.lower() in ('cash',):
-                        payment_mode = 'Cash'
-                    else:
-                        payment_mode = pm
-                else:
-                    # Infer from description if possible
-                    if 'cash' in desc.lower() or 'petrol' in desc.lower():
-                        payment_mode = 'Cash'
-                    elif 'salary' in desc.lower() or 'freelance' in desc.lower() or 'transfer' in desc.lower():
-                        payment_mode = 'Bank Transfer'
-                    else:
-                        payment_mode = 'UPI'
+                return pd.read_csv(filepath, skiprows=header_idx, encoding=enc, on_bad_lines='skip')
+            except Exception:
+                continue
+        return pd.read_csv(filepath, skiprows=header_idx, on_bad_lines='skip')
+    else:
+        header_idx = find_header_row_excel(filepath)
+        return pd.read_excel(filepath, skiprows=header_idx)
 
-                notes = ''
-                if 'notes' in df.columns and pd.notna(row['notes']):
-                    notes = str(row['notes']).strip()
-                
-                transaction_dict = {
-                    'user_id': user_id,
-                    'date': date_val,
-                    'description': desc[:255],  # Limit to 255 chars
-                    'amount': amount,
-                    'type': t_type,
-                    'category': category,
-                    'expense_type': expense_type,
-                    'payment_mode': payment_mode,
-                    'source': source,
-                    'notes': notes
-                }
-                
-                transactions.append(transaction_dict)
-                success_count += 1
-                
-            except Exception as e:
-                skip_count += 1
-                error_messages.append(f"Row {index+1} error: {str(e)}")
-                
-        return transactions, success_count, skip_count, error_messages
-        
+def process_uploaded_file(filepath, user_id):
+    """Reads CSV/Excel, normalizes columns, categorizes, and returns clean records."""
+    try:
+        df = load_statement_dataframe(filepath)
     except Exception as e:
-        return [], 0, 0, [f"Failed to process file: {str(e)}"]
+        return [], 0, 0, [f"Failed to read file: {e}"]
+
+    if df.empty:
+        return [], 0, 0, ["The uploaded file contains no data."]
+
+    # Standardize column headers (lowercase, trimmed)
+    df.columns = [str(c).strip().lower() for c in df.columns]
+
+    # Map possible alternative column names across PhonePe, Paytm, GPay, and banks
+    col_map = {
+        'transaction details': 'description', 'activity': 'description', 'narration': 'description',
+        'details': 'description', 'particulars': 'description', 'remarks': 'description',
+        'txn date': 'date', 'transaction date': 'date', 'value date': 'date',
+        'txn amount': 'amount', 'transaction amount': 'amount',
+        'transaction type': 'type', 'cr/dr': 'type', 'status': 'type',
+        'credit/debit instrument': 'payment_mode', 'payment mode': 'payment_mode', 'mode': 'payment_mode'
+    }
+    # Only map 'time' to 'date' if 'date' column doesn't already exist
+    if 'date' not in df.columns and 'time' in df.columns:
+        col_map['time'] = 'date'
+
+    df.rename(columns=col_map, inplace=True)
+    # Deduplicate columns if any duplicate was created
+    df = df.loc[:, ~df.columns.duplicated()]
+
+    # Handle separate Debit / Credit or Withdrawal / Deposit columns if 'amount' is absent
+    has_separate_dr_cr = False
+    debit_col = next((c for c in ['withdrawal', 'debit', 'dr', 'withdrawal amount'] if c in df.columns), None)
+    credit_col = next((c for c in ['deposit', 'credit', 'cr', 'deposit amount'] if c in df.columns), None)
+    if 'amount' not in df.columns and (debit_col or credit_col):
+        has_separate_dr_cr = True
+
+    # Verify minimum required columns
+    if 'description' not in df.columns:
+        return [], 0, 0, ["File must contain a transaction description column (e.g. 'Transaction Details', 'Description', 'Narration')."]
+    if 'amount' not in df.columns and not has_separate_dr_cr:
+        return [], 0, 0, ["File must contain an 'amount' column (or Debit/Credit columns)."]
+
+    transactions = []
+    skipped = 0
+
+    for _, row in df.iterrows():
+        try:
+            # 1. Clean amount and determine type if separate dr/cr
+            t_type = None
+            amt = 0.0
+
+            if has_separate_dr_cr:
+                dr_val = str(row.get(debit_col, '')).replace('₹', '').replace(',', '').replace('Rs.', '').replace('INR', '').strip() if debit_col else ''
+                cr_val = str(row.get(credit_col, '')).replace('₹', '').replace(',', '').replace('Rs.', '').replace('INR', '').strip() if credit_col else ''
+                dr_num = float(dr_val) if dr_val and dr_val.lower() != 'nan' else 0.0
+                cr_num = float(cr_val) if cr_val and cr_val.lower() != 'nan' else 0.0
+                if dr_num > 0:
+                    amt = dr_num
+                    t_type = 'expense'
+                elif cr_num > 0:
+                    amt = cr_num
+                    t_type = 'income'
+                else:
+                    skipped += 1
+                    continue
+            else:
+                amt_raw = str(row.get('amount', '')).replace('₹', '').replace(',', '').replace('Rs.', '').replace('INR', '').strip()
+                amt = abs(float(amt_raw))
+                if amt <= 0 or pd.isna(amt):
+                    skipped += 1
+                    continue
+
+            # 2. Clean date (always safe YYYY-MM-DD string)
+            date_val = row.get('date')
+            if isinstance(date_val, pd.Series):
+                date_val = date_val.dropna().iloc[0] if not date_val.dropna().empty else None
+            date_str = clean_date(date_val)
+
+            # 3. Description & type
+            desc_val = row.get('description', '')
+            if isinstance(desc_val, pd.Series):
+                desc_val = desc_val.dropna().iloc[0] if not desc_val.dropna().empty else ''
+            desc = str(desc_val).strip()[:255]
+            if not desc or desc.lower() == 'nan':
+                desc = "Transaction"
+
+            if t_type is None:
+                raw_type = str(row.get('type', '')).lower()
+                if any(w in raw_type for w in ['credit', 'income', 'received', 'cr', 'deposit']):
+                    t_type = 'income'
+                elif any(w in raw_type for w in ['debit', 'expense', 'paid', 'dr', 'withdrawal']):
+                    t_type = 'expense'
+                elif any(w in desc.lower() for w in ['received from', 'refund from', 'cashback', 'credited']):
+                    t_type = 'income'
+                else:
+                    t_type = 'expense'
+
+            # 4. Category & Expense Type
+            cat = str(row['category']).strip() if 'category' in row and pd.notna(row['category']) and str(row['category']).strip() else categorize_transaction(desc)
+            exp_type = classify_expense_type(desc, amt, cat)
+
+            # 5. Payment mode
+            mode_raw = str(row.get('payment_mode', '')).strip().upper()
+            if 'CASH' in mode_raw: mode = 'Cash'
+            elif 'CARD' in mode_raw: mode = 'Card'
+            elif 'BANK' in mode_raw or 'TRANSFER' in mode_raw: mode = 'Bank Transfer'
+            else: mode = 'UPI'
+
+            transactions.append({
+                'user_id': user_id,
+                'date': date_str,
+                'description': desc,
+                'amount': amt,
+                'type': t_type,
+                'category': cat,
+                'expense_type': exp_type,
+                'payment_mode': mode
+            })
+        except Exception:
+            skipped += 1
+            continue
+
+    return transactions, len(transactions), skipped, []

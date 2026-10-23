@@ -1,32 +1,22 @@
-# categorization.py
-# This file helps categorize transactions based on their description.
+# categorization.py - OM'S MODULE: Transaction Categorization
+# Uses dictionary lookup and keyword search to categorize spending.
 
 CATEGORY_KEYWORDS = {
-    'Food': ['swiggy', 'zomato', 'mcdonald', 'kfc', 'domino', 'pizza', 'restaurant', 'cafe', 'food', 'eat', 'dining', 'hotel', 'breakfast', 'lunch', 'dinner', 'snack', 'barbeque', 'burger', 'biryani', 'chai', 'tea', 'coffee', 'bakery', 'sweet'],
-    'Transport': ['uber', 'ola', 'rapido', 'auto', 'taxi', 'metro', 'bus', 'train', 'petrol', 'diesel', 'fuel', 'irctc', 'redbus', 'makemytrip transport', 'cab', 'rickshaw'],
-    'Shopping': ['amazon', 'flipkart', 'myntra', 'ajio', 'meesho', 'nykaa', 'shopping', 'store', 'mall', 'market', 'clothes', 'shoes', 'apparel', 'fashion'],
-    'Entertainment': ['netflix', 'amazon prime', 'hotstar', 'spotify', 'youtube', 'movie', 'cinema', 'pvr', 'inox', 'gaming', 'game', 'ticket'],
-    'Bills': ['electricity', 'water', 'recharge', 'internet', 'wifi', 'mobile', 'broadband', 'postpaid', 'prepaid', 'bill', 'emi'],
-    'Education': ['college', 'university', 'school', 'books', 'course', 'exam', 'fee', 'tuition', 'library', 'study', 'udemy', 'coursera'],
-    'Health': ['hospital', 'clinic', 'doctor', 'medicine', 'pharmacy', 'medical', 'health', 'gym', 'fitness'],
-    'Travel': ['flight', 'hotel', 'airbnb', 'oyo', 'booking', 'trip', 'holiday', 'vacation', 'makemytrip', 'yatra', 'goibibo']
+    'Food': ['swiggy', 'zomato', 'mcdonald', 'kfc', 'domino', 'pizza', 'cafe', 'restaurant', 'biryani', 'tea', 'coffee', 'burger', 'mess', 'canteen', 'food', 'stall', 'panipuri', 'catering', 'bakery', 'sweets', 'snack', 'dining', 'kitchen', 'mcdelivery', 'fruit', 'juice'],
+    'Transport': ['uber', 'ola', 'rapido', 'auto', 'metro', 'bus', 'train', 'petrol', 'fuel', 'fastag', 'irctc', 'petroleum', 'transport', 'cab'],
+    'Shopping': ['amazon', 'flipkart', 'myntra', 'ajio', 'meesho', 'clothes', 'shoes', 'mall', 'electronics', 'croma', 'store', 'mart', 'mens wear', 'wear', 'bazaar', 'supermarket', 'market', 'provisions', 'retail', 'trading', 'general store'],
+    'Entertainment': ['netflix', 'prime', 'hotstar', 'spotify', 'youtube', 'movie', 'cinema', 'pvr', 'inox', 'bookmyshow', 'game', 'gamerz', 'gaming', 'theatre'],
+    'Bills': ['electricity', 'water', 'gas', 'recharge', 'wifi', 'internet', 'airtel', 'jio', 'vi', 'bill', 'emi', 'loan', 'maintenance', 'google cloud', 'aws', 'securities', 'angel one', 'zerodha', 'groww', 'insurance', 'sahakari'],
+    'Education': ['college', 'school', 'books', 'fee', 'tuition', 'udemy', 'coursera', 'exam', 'library', 'stationery', 'computer', 'classes', 'vidyarthi'],
+    'Health': ['hospital', 'clinic', 'doctor', 'medicine', 'pharmacy', 'gym', 'fitness', 'apollo', 'lab', 'medical', 'chemist', 'healthcare'],
+    'Travel': ['flight', 'hotel', 'airbnb', 'oyo', 'trip', 'holiday', 'makemytrip', 'booking', 'yatra', 'tour', 'resort']
 }
 
-def categorize_transaction(description):
-    """
-    Takes a transaction description, converts it to lowercase,
-    and returns the matching category based on keywords.
-    """
-    if not description:
-        return 'Other'
-        
-    desc_lower = description.lower()
-    
-    # Check each category and its keywords
-    for category, keywords in CATEGORY_KEYWORDS.items():
-        for keyword in keywords:
-            if keyword in desc_lower:
-                return category
-                
-    # If no keywords match, return 'Other'
+def categorize_transaction(desc):
+    """Matches keywords in description to return category."""
+    if not desc: return 'Other'
+    d = str(desc).lower()
+    for cat, words in CATEGORY_KEYWORDS.items():
+        if any(w in d for w in words):
+            return cat
     return 'Other'
