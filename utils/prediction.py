@@ -1,4 +1,4 @@
-# prediction.py - KEDAR'S MODULE: Linear Regression Spending Prediction (Y = mX + c)
+
 import datetime
 from sklearn.linear_model import LinearRegression
 from database import get_db_connection

@@ -1,8 +1,4 @@
-# app.py - Personal Finance & Expense Analyzer
-# Syllabus Mapping:
-# - Om: Transactions (CRUD, search, filter, CSV upload, category totals)
-# - Spandan: Budgets & Goals, User Auth/Sessions (OS & DBMS), Financial Advice
-# - Kedar: Applied Statistics (Mean, Median, Std Dev), Z-Score Anomaly Detection, Linear Regression Prediction
+
 
 import os, bcrypt, numpy as np
 from datetime import datetime, date
@@ -16,6 +12,7 @@ from utils.prediction import get_all_predictions
 from utils.anomaly_detection import detect_anomalies_for_user, get_unusual_transactions
 from utils.recommendations import generate_recommendations
 from utils.preprocessing import process_uploaded_file
+from utils.savings_impact import calculate_goal_acceleration_plan
 
 app = Flask(__name__)
 app.secret_key = 'finance_college_project_key_2026'
@@ -30,7 +27,7 @@ def inject_user():
 def is_logged_in():
     return 'user_id' in session
 
-# ----------------- AUTH (SPANDAN) -----------------
+# ----------------- AUTH -----------------
 @app.route('/')
 def index():
     return redirect(url_for('dashboard') if is_logged_in() else url_for('login'))
@@ -133,7 +130,7 @@ def dashboard():
         available_months=available_months
     )
 
-# ----------------- TRANSACTIONS (OM) -----------------
+# ----------------- TRANSACTIONS -----------------
 @app.route('/transactions')
 def transactions():
     if not is_logged_in(): return redirect(url_for('login'))
@@ -238,7 +235,7 @@ def upload():
         return redirect(url_for('transactions'))
     return render_template('upload.html')
 
-# ----------------- BUDGET & GOALS (SPANDAN) -----------------
+# ----------------- BUDGET & GOALS -----------------
 @app.route('/budget', methods=['GET', 'POST'])
 def budget():
     if not is_logged_in(): return redirect(url_for('login'))
@@ -316,6 +313,7 @@ def goals():
         g['is_achieved'] = g['current_amount'] >= g['target_amount']
         rem = g['target_amount'] - g['current_amount']
         g['months_remaining'] = int(rem / g['monthly_contribution']) + 1 if rem > 0 and g['monthly_contribution'] > 0 else 0
+        g['acceleration_plan'] = calculate_goal_acceleration_plan(uid, g['target_amount'], g['current_amount'], g['monthly_contribution'])
 
     return render_template('goals.html', goals=goals_list)
 
@@ -342,12 +340,41 @@ def delete_goal(goal_id):
         flash('Goal deleted.', 'info')
     return redirect(url_for('goals'))
 
-# ----------------- STATS & PREDICTIONS (KEDAR) -----------------
+# ----------------- STATS & PREDICTIONS -----------------
 @app.route('/analysis')
 def analysis():
     if not is_logged_in(): return redirect(url_for('login'))
     uid = session['user_id']
-    m, y = date.today().month, date.today().year
+    today = date.today()
+
+    conn = get_db_connection()
+    available_months = []
+    if conn:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT DISTINCT MONTH(date) as month, YEAR(date) as year, MONTHNAME(date) as month_name
+            FROM transactions WHERE user_id = %s ORDER BY year DESC, month DESC
+        """, (uid,))
+        available_months = cursor.fetchall()
+        conn.close()
+
+    req_m = request.args.get('month')
+    req_y = request.args.get('year')
+
+    if req_m and req_y:
+        m = int(req_m)
+        y = int(req_y)
+    elif available_months:
+        has_current = any(item['month'] == today.month and item['year'] == today.year for item in available_months)
+        if has_current:
+            m = today.month
+            y = today.year
+        else:
+            m = available_months[0]['month']
+            y = available_months[0]['year']
+    else:
+        m = today.month
+        y = today.year
 
     conn = get_db_connection()
     amounts, cat_budgets = [], {}
@@ -374,7 +401,10 @@ def analysis():
         stats_metrics=stats_metrics,
         predictions=predictions,
         unusual_transactions=get_unusual_transactions(uid, 10),
-        monthly_trend=get_monthly_expenses(uid, 12)
+        monthly_trend=get_monthly_expenses(uid, 12),
+        current_month=m,
+        current_year=y,
+        available_months=available_months
     )
 
 if __name__ == '__main__':

@@ -3,10 +3,25 @@
 {% block title %}Statistical Analysis & Predictions - FinanceAnalyzer{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
     <div>
         <h2>Applied Statistics & Predictions</h2>
         <p>Mean, median, standard deviation metrics, Z-score anomaly flags, and Linear Regression projections</p>
+    </div>
+    <div>
+        <select onchange="const p = this.value.split('-'); window.location.href='{{ url_for('analysis') }}?month=' + p[0] + '&year=' + p[1];" style="padding: 8px 14px; font-weight: 700; border-radius: 8px; border: 1px solid var(--border-color); background: #ffffff; cursor: pointer; color: var(--text-main);">
+            {% if available_months and available_months|length > 0 %}
+                {% for av in available_months %}
+                <option value="{{ av.month }}-{{ av.year }}" {% if av.month == current_month and av.year == current_year %}selected{% endif %}>
+                    📅 {{ av.month_name }} {{ av.year }}
+                </option>
+                {% endfor %}
+            {% else %}
+                <option value="{{ current_month }}-{{ current_year }}" selected>
+                    📅 {{ current_month }}/{{ current_year }}
+                </option>
+            {% endif %}
+        </select>
     </div>
 </div>
 
@@ -94,6 +109,9 @@
             </tbody>
         </table>
     </div>
+    <p style="color: var(--text-muted); font-size: 12px; margin-top: 12px; padding: 0 4px;">
+        ℹ️ <em>Note: Linear Regression requires at least <strong>3 separate spending days</strong> in a category within the selected month to fit the slope $Y = mX + c$. Categories with fewer than 3 transactions in this month are excluded to prevent inaccurate projections.</em>
+    </p>
     {% else %}
     <p style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 30px 0;">
         Need at least 3 transactions in a category this month to compute Linear Regression.
@@ -104,8 +122,8 @@
 <!-- Anomaly Detection Card (Z-Score) -->
 <div class="card">
     <h3>
-        <span>Flagged Anomaly Transactions (Z-Score > 2.0)</span>
-        <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Z = (X - μ) / σ</span>
+        <span>Flagged Anomaly Transactions (Category-Wise Z-Score > 2.0)</span>
+        <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Z = (X - μ_cat) / σ_cat</span>
     </h3>
 
     {% if unusual_transactions and unusual_transactions|length > 0 %}
@@ -129,12 +147,15 @@
                     <td><span class="badge badge-neutral">{{ tx.category }}</span></td>
                     <td style="color: var(--text-muted); font-size: 13px;">{{ tx.payment_mode }}</td>
                     <td style="font-weight: 800; color: #dc2626; font-size: 15px;">₹{{ "{:,.2f}".format(tx.amount) }}</td>
-                    <td><span class="badge badge-unusual">⚠️ Outlier (|Z| > 2)</span></td>
+                    <td><span class="badge badge-unusual">⚠️ Category Outlier (|Z| > 2.0)</span></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    <p style="color: var(--text-muted); font-size: 12px; margin-top: 12px; padding: 0 4px;">
+        ℹ️ <em>Note: Linear Regression requires at least <strong>3 separate spending days</strong> in a category within the selected month to fit the slope $Y = mX + c$. Categories with fewer than 3 transactions in this month are excluded to prevent inaccurate projections.</em>
+    </p>
     {% else %}
     <p style="color: #059669; font-size: 14px; text-align: center; padding: 30px 0; font-weight: 600;">
         ✅ All expenses are within normal statistical ranges (no outliers exceeding 2 standard deviations).
@@ -164,6 +185,9 @@
             </tbody>
         </table>
     </div>
+    <p style="color: var(--text-muted); font-size: 12px; margin-top: 12px; padding: 0 4px;">
+        ℹ️ <em>Note: Linear Regression requires at least <strong>3 separate spending days</strong> in a category within the selected month to fit the slope $Y = mX + c$. Categories with fewer than 3 transactions in this month are excluded to prevent inaccurate projections.</em>
+    </p>
     {% else %}
     <p style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">
         No past monthly transaction history available.

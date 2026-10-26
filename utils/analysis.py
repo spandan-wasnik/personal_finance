@@ -1,4 +1,4 @@
-# analysis.py - OM'S & SPANDAN'S MODULE: Summary Math & Aggregations
+
 from database import get_db_connection
 
 def get_summary(user_id, month=None, year=None):
@@ -84,7 +84,7 @@ def get_recent_transactions(user_id, limit=8):
     return rows
 
 def get_budget_status(user_id, month, year):
-    """SPANDAN'S PART: Compares budget with actual spending."""
+    
     conn = get_db_connection()
     if not conn: return {'budget': 0.0, 'spent': 0.0, 'remaining': 0.0, 'percentage_used': 0.0}
     cursor = conn.cursor(dictionary=True)

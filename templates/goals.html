@@ -71,10 +71,48 @@
                         <span>{{ "{:.1f}".format(g.progress_percentage) }}%</span>
                     </div>
 
-                    {% if g.months_remaining and g.months_remaining > 0 and not g.is_achieved %}
-                    <p style="font-size: 12.5px; color: #0284c7; background: #e0f2fe; padding: 6px 10px; border-radius: 6px; display: inline-block;">
-                        ⏳ Est. ~{{ g.months_remaining }} months left at ₹{{ "{:,.0f}".format(g.monthly_contribution) }}/mo
-                    </p>
+                    {% if not g.is_achieved %}
+                        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px; margin-bottom: 8px;">
+                            {% if g.months_remaining and g.months_remaining > 0 %}
+                            <div style="font-size: 12px; color: #0284c7; background: #e0f2fe; padding: 6px 10px; border-radius: 6px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+                                <span>⏳ <strong>Current Pace (Without Cuts):</strong></span>
+                                <span>~{{ g.months_remaining }} months at ₹{{ "{:,.0f}".format(g.monthly_contribution) }}/mo</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if g.acceleration_plan and g.acceleration_plan.months_saved > 0 %}
+                            <div style="font-size: 12px; color: #15803d; background: #dcfce7; padding: 6px 10px; border-radius: 6px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+                                <span>🚀 <strong>Accelerated Pace (With Cuts):</strong></span>
+                                <span>~{{ g.acceleration_plan.accelerated_months }} months (<strong>{{ g.acceleration_plan.months_saved }} mo faster!</strong>)</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if g.acceleration_plan and g.acceleration_plan.category_cuts %}
+                        <div style="margin-top: 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 12px; font-weight: 700; color: #334155;">💡 Suggested Cuts to Accelerate Goal:</span>
+                                <span style="font-size: 11px; font-weight: 800; color: #16a34a; background: #dcfce7; padding: 2px 8px; border-radius: 10px;">+₹{{ "{:,.0f}".format(g.acceleration_plan.total_monthly_cuts) }}/mo Boost</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 5px;">
+                                {% for cut in g.acceleration_plan.category_cuts %}
+                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; background: #ffffff; padding: 5px 8px; border-radius: 5px; border: 1px solid #e2e8f0;">
+                                    <div>
+                                        <strong style="color: #0f172a;">✂️ {{ cut.category }}:</strong>
+                                        <span style="color: #64748b; font-size: 11px; margin-left: 4px;">{{ cut.tip }}</span>
+                                    </div>
+                                    <div style="text-align: right; white-space: nowrap; margin-left: 8px;">
+                                        <span style="font-weight: 700; color: #16a34a;">Save ₹{{ "{:,.0f}".format(cut.cut_amount) }}/mo</span>
+                                        <span style="color: #94a3b8; font-size: 10.5px;">(-{{ cut.cut_percent }}%)</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div style="font-size: 11px; color: #64748b; margin-top: 6px; text-align: right;">
+                                Total saving rate increases from ₹{{ "{:,.0f}".format(g.monthly_contribution) }}/mo to <strong>₹{{ "{:,.0f}".format(g.acceleration_plan.accelerated_contribution) }}/mo</strong>
+                            </div>
+                        </div>
+                        {% endif %}
                     {% endif %}
                 </div>
 
